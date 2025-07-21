@@ -14,76 +14,68 @@
 <body>
 
     <div class="container">
-        <!-- Settings Bar -->
-        <header class="settings-bar">
-            <div class="setting-group">
-                <label for="interval-input">Interval (s):</label>
-                <input type="number" id="interval-input" value="10" min="5">
-            </div>
-            <div class="setting-group">
-                <label for="timeout-input">Timeout (s):</label>
-                <input type="number" id="timeout-input" value="10" min="1">
-            </div>
+        <!-- Resizable Top Panel -->
+        <section class="top-panel">
+            <textarea id="targets-input" placeholder="ป้อนเป้าหมายที่นี่ (หนึ่งบรรทัดต่อหนึ่งเป้าหมาย)&#10;ตัวอย่าง:&#10;google.com&#10;8.8.8.8&#10;192.168.1.0/24"></textarea>
             <button id="start-stop-button" class="start">
                 <i id="button-icon" class="ph-bold ph-play"></i>
                 <span id="button-text">Start</span>
             </button>
-        </header>
+        </section>
 
-        <!-- Main Content Area -->
-        <main class="main-content">
-            <!-- Left: Input Area -->
-            <section class="input-section">
-                <textarea id="targets-input" placeholder="ป้อนเป้าหมายที่นี่ (หนึ่งบรรทัดต่อหนึ่งเป้าหมาย)&#10;ตัวอย่าง:&#10;google.com&#10;8.8.8.8&#10;192.168.1.0/24"></textarea>
-                <div id="warning-message">
-                    <i class="ph-bold ph-warning"></i>
-                    <span id="warning-text"></span>
-                </div>
-            </section>
+        <!-- Draggable Splitter -->
+        <div class="splitter"></div>
 
-            <!-- Right: Results Table -->
-            <section class="results-section">
+        <!-- Resizable Bottom Panel -->
+        <section class="bottom-panel">
+            <header class="results-header">
+                <h3><i class="ph ph-chart-line"></i>Results</h3>
                 <div class="filter-bar">
                     <button class="filter-button active" data-filter="all">All</button>
                     <button class="filter-button" data-filter="online">Online</button>
                     <button class="filter-button" data-filter="offline">Offline</button>
                 </div>
-                <div class="results-table-container">
-                    <table class="results-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 30%;">Target</th>
-                                <th style="width: 120px;">Status</th>
-                                <th style="width: 100px;">RTT (ms)</th>
-                                <th>Error Details</th>
-                            </tr>
-                        </thead>
-                        <tbody id="results-tbody">
-                            <!-- Rows will be dynamically inserted by renderer.js -->
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-        </main>
+            </header>
+            <div class="results-table-container">
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Target</th>
+                            <th>Status</th>
+                            <th>Type</th>
+                            <th>RTT (ms)</th>
+                            <th>Last Change</th>
+                            <th>Last Checked</th>
+                            <th>Error Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-tbody">
+                        <!-- Rows will be dynamically inserted by renderer.js -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
     </div>
 
-    <!-- Status Bar -->
     <footer class="status-bar">
         <div class="status-bar-item">
             <i class="ph-bold ph-list"></i>
             <span id="total-targets">Targets: 0</span>
         </div>
         <div class="status-bar-item">
-            <i class="ph-bold ph-check-circle" id="status-online"></i>
+            <i class="ph-bold ph-check-circle" id="status-online-icon"></i>
             <span id="online-targets">Online: 0</span>
         </div>
         <div class="status-bar-item">
-            <i class="ph-bold ph-x-circle" id="status-offline"></i>
+            <i class="ph-bold ph-x-circle" id="status-offline-icon"></i>
             <span id="offline-targets">Offline: 0</span>
+        </div>
+        <div class="status-bar-item">
+            <i class="ph-bold ph-hourglass" id="status-pending-icon"></i>
+            <span id="pending-targets">Pending: 0</span>
         </div>
     </footer>
 
-    <!-- Renderer Script -->
     <script src="renderer.js"></script>
 </body>
 </html>

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --surface-color: #1e1e1e;
+            --primary-text-color: #e0e0e0;
+            --secondary-text-color: #a0a0a0;
+            --border-color: #333333;
+            --accent-color: #4dabf7;
+            --success-color: #4caf50;
+            --font-family: 'Inter', sans-serif;
+        }
+        html { box-sizing: border-box; }
+        *, *:before, *:after { box-sizing: inherit; }
+        body {
+            background-color: var(--surface-color);
+            color: var(--primary-text-color);
+            font-family: var(--font-family);
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            -webkit-app-region: drag; /* Allows dragging the frameless window */
+        }
+        /* FIX: Added 'label' to the no-drag region to make switches clickable */
+        button, input, label {
+            -webkit-app-region: no-drag; /* Exclude controls from drag region */
+        }
+        .settings-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .tabs {
+            display: flex;
+            background-color: #2a2a2a;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        .tab-button {
+            padding: 14px 20px;
+            border: none;
+            background-color: transparent;
+            color: var(--secondary-text-color);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 500;
+            transition: color 0.2s, border-bottom 0.2s;
+            border-bottom: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tab-button:hover { color: var(--primary-text-color); }
+        .tab-button.active {
+            color: var(--accent-color);
+            border-bottom-color: var(--accent-color);
+        }
+        .content-area {
+            padding: 24px;
+            flex-grow: 1;
+            overflow-y: auto;
+             -webkit-app-region: no-drag; /* Make the whole content area non-draggable for safety */
+        }
+        .tab-content { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .form-section h3 {
+            margin-top: 0;
+            margin-bottom: 16px;
+            font-size: 18px;
+            color: var(--primary-text-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+        .form-group {
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .form-group label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--secondary-text-color);
+        }
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group input[type="password"] {
+            background-color: var(--bg-color);
+            color: var(--primary-text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px 12px;
+            font-family: inherit;
+            font-size: 14px;
+            width: 100%;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(77, 171, 247, 0.2);
+        }
+        .form-group input:disabled {
+            background-color: #2f2f2f;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        .input-with-unit { position: relative; }
+        .input-with-unit span {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--secondary-text-color);
+            font-size: 14px;
+        }
+        .sub-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+        .sub-tab-button {
+            padding: 8px 16px;
+            border: 1px solid var(--border-color);
+            background-color: transparent;
+            color: var(--secondary-text-color);
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .sub-tab-button:hover { background-color: var(--border-color); color: var(--primary-text-color); }
+        .sub-tab-button.active {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+            font-weight: 600;
+            border-color: var(--accent-color);
+        }
+        .toggle-group { display: flex; align-items: center; justify-content: space-between; }
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #444; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--success-color); }
+        input:checked + .slider:before { transform: translateX(20px); }
+        .settings-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 16px 24px;
+            background-color: #2a2a2a;
+            border-top: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        .footer-button { padding: 10px 20px; border: none; border-radius: 6px; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
+        #save-button { background-color: var(--accent-color); color: #121212; }
+        #save-button:hover { background-color: #6ebff9; }
+        #cancel-button { background-color: var(--border-color); color: var(--primary-text-color); }
+        #cancel-button:hover { background-color: #444; }
+    </style>
+</head>
+<body>
+    <div class="settings-container">
+        <header class="tabs">
+            <button class="tab-button active" data-tab="general-tab"><i class="ph ph-gear"></i>General</button>
+            <button class="tab-button" data-tab="profiles-tab"><i class="ph ph-users"></i>Profiles</button>
+        </header>
+
+        <main class="content-area">
+            <div id="general-tab" class="tab-content">
+                <section class="form-section">
+                    <h3>Application Settings</h3>
+                    <div class="form-group">
+                        <label for="interval-input">Check Interval</label>
+                        <div class="input-with-unit">
+                            <input type="number" id="interval-input" value="10" min="5">
+                            <span>seconds</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="timeout-input">Check Timeout</label>
+                        <div class="input-with-unit">
+                            <input type="number" id="timeout-input" value="10" min="1">
+                            <span>seconds</span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div id="profiles-tab" class="tab-content" style="display: none;">
+                <section class="form-section">
+                    <h3>Profile Management</h3>
+                    <div class="sub-tabs">
+                        <button class="sub-tab-button active" data-subtab="profile-1-tab">Profile 1</button>
+                        <button class="sub-tab-button" data-subtab="profile-2-tab">Profile 2</button>
+                        <button class="sub-tab-button" data-subtab="profile-3-tab">Profile 3</button>
+                    </div>
+
+                    <div id="profile-1-tab" class="sub-tab-content profile-content" data-profile-id="1">
+                        <div class="form-group"><label for="profile-1-name">Profile Name</label><input type="text" id="profile-1-name" placeholder="Profile 1"></div>
+                        <hr style="border-color: var(--border-color); border-top: 0; margin: 20px 0;">
+                        <div class="toggle-group"><label for="profile-1-telegram-enable"><strong>Telegram Notifications</strong><br><span style="font-size: 12px; color: var(--secondary-text-color);">Enable alerts for this profile</span></label><label class="switch"><input type="checkbox" id="profile-1-telegram-enable"><span class="slider"></span></label></div>
+                        <div class="form-group" style="margin-top: 16px;"><label for="profile-1-token">Bot Token</label><input type="password" id="profile-1-token" placeholder="Enter your Telegram Bot Token"></div>
+                        <div class="form-group"><label for="profile-1-chatid">Chat ID</label><input type="text" id="profile-1-chatid" placeholder="Enter your Telegram Chat ID"></div>
+                    </div>
+                    <div id="profile-2-tab" class="sub-tab-content profile-content" style="display: none;" data-profile-id="2">
+                        <div class="form-group"><label for="profile-2-name">Profile Name</label><input type="text" id="profile-2-name" placeholder="Profile 2"></div>
+                        <hr style="border-color: var(--border-color); border-top: 0; margin: 20px 0;">
+                        <div class="toggle-group"><label for="profile-2-telegram-enable"><strong>Telegram Notifications</strong><br><span style="font-size: 12px; color: var(--secondary-text-color);">Enable alerts for this profile</span></label><label class="switch"><input type="checkbox" id="profile-2-telegram-enable"><span class="slider"></span></label></div>
+                        <div class="form-group" style="margin-top: 16px;"><label for="profile-2-token">Bot Token</label><input type="password" id="profile-2-token" placeholder="Enter your Telegram Bot Token"></div>
+                        <div class="form-group"><label for="profile-2-chatid">Chat ID</label><input type="text" id="profile-2-chatid" placeholder="Enter your Telegram Chat ID"></div>
+                    </div>
+                    <div id="profile-3-tab" class="sub-tab-content profile-content" style="display: none;" data-profile-id="3">
+                        <div class="form-group"><label for="profile-3-name">Profile Name</label><input type="text" id="profile-3-name" placeholder="Profile 3"></div>
+                        <hr style="border-color: var(--border-color); border-top: 0; margin: 20px 0;">
+                        <div class="toggle-group"><label for="profile-3-telegram-enable"><strong>Telegram Notifications</strong><br><span style="font-size: 12px; color: var(--secondary-text-color);">Enable alerts for this profile</span></label><label class="switch"><input type="checkbox" id="profile-3-telegram-enable"><span class="slider"></span></label></div>
+                        <div class="form-group" style="margin-top: 16px;"><label for="profile-3-token">Bot Token</label><input type="password" id="profile-3-token" placeholder="Enter your Telegram Bot Token"></div>
+                        <div class="form-group"><label for="profile-3-chatid">Chat ID</label><input type="text" id="profile-3-chatid" placeholder="Enter your Telegram Chat ID"></div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <footer class="settings-footer">
+            <button id="cancel-button" class="footer-button">Cancel</button>
+            <button id="save-button" class="footer-button">Save Changes</button>
+        </footer>
+    </div>
+    <script src="settings-renderer.js"></script>
+</body>
+</html>
