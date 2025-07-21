@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Monitor</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Settings Bar -->
+        <header class="settings-bar">
+            <div class="setting-group">
+                <label for="interval-input">Interval (s):</label>
+                <input type="number" id="interval-input" value="10" min="5">
+            </div>
+            <div class="setting-group">
+                <label for="timeout-input">Timeout (s):</label>
+                <input type="number" id="timeout-input" value="10" min="1">
+            </div>
+            <button id="start-stop-button" class="start">
+                <i id="button-icon" class="ph-bold ph-play"></i>
+                <span id="button-text">Start</span>
+            </button>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Left: Input Area -->
+            <section class="input-section">
+                <textarea id="targets-input" placeholder="ป้อนเป้าหมายที่นี่ (หนึ่งบรรทัดต่อหนึ่งเป้าหมาย)&#10;ตัวอย่าง:&#10;google.com&#10;8.8.8.8&#10;192.168.1.0/24"></textarea>
+                <div id="warning-message">
+                    <i class="ph-bold ph-warning"></i>
+                    <span id="warning-text"></span>
+                </div>
+            </section>
+
+            <!-- Right: Results Table -->
+            <section class="results-section">
+                <div class="filter-bar">
+                    <button class="filter-button active" data-filter="all">All</button>
+                    <button class="filter-button" data-filter="online">Online</button>
+                    <button class="filter-button" data-filter="offline">Offline</button>
+                </div>
+                <div class="results-table-container">
+                    <table class="results-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 30%;">Target</th>
+                                <th style="width: 120px;">Status</th>
+                                <th style="width: 100px;">RTT (ms)</th>
+                                <th>Error Details</th>
+                            </tr>
+                        </thead>
+                        <tbody id="results-tbody">
+                            <!-- Rows will be dynamically inserted by renderer.js -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Status Bar -->
+    <footer class="status-bar">
+        <div class="status-bar-item">
+            <i class="ph-bold ph-list"></i>
+            <span id="total-targets">Targets: 0</span>
+        </div>
+        <div class="status-bar-item">
+            <i class="ph-bold ph-check-circle" id="status-online"></i>
+            <span id="online-targets">Online: 0</span>
+        </div>
+        <div class="status-bar-item">
+            <i class="ph-bold ph-x-circle" id="status-offline"></i>
+            <span id="offline-targets">Offline: 0</span>
+        </div>
+    </footer>
+
+    <!-- Renderer Script -->
+    <script src="renderer.js"></script>
+</body>
+</html>
