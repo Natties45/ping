@@ -3,14 +3,15 @@
  * This is the main process for the Electron application. It handles window
  * creation, background tasks (like network checks), and native OS interactions.
  *
- * Version 2.1: Updated checkTarget to return more detailed results for the new UI.
+ * Version 2.2:
+ * - Fixed CIDR parsing by using cidr.toArray() correctly.
+ * - Removed TCP port checking functionality.
  */
 
 const { app, BrowserWindow, ipcMain, Notification, Menu, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const ping = require('ping');
-const tcpPing = require('tcp-ping');
 const axios = require('axios');
 
 // --- Global variables ---
@@ -175,8 +176,8 @@ function buildMenu() {
                     click: () => {
                         dialog.showMessageBox(null, {
                             type: 'info', title: 'About Network Monitor',
-                            message: 'Network Monitor v2.1',
-                            detail: 'Redesigned main UI with resizable panels and more detailed results.'
+                            message: 'Network Monitor v2.2',
+                            detail: 'Fixed CIDR parsing and removed TCP port checks.'
                         });
                     }
                 }
@@ -216,21 +217,17 @@ ipcMain.handle('parse-text-to-targets', async (event, rawText) => {
         line = line.trim();
         if (CIDR.isValidCIDR(line)) {
             const cidr = new CIDR(line);
-            const ips = cidr.toArray({ from: 1, limit: cidr.count() - 2 });
+            // FIX: Correctly call toArray() without parameters to get all hosts.
+            // The library was updated and toArray({ from: 1, limit: cidr.count() - 2 }) is no longer the correct usage.
+            const ips = cidr.toArray();
             ips.forEach(ip => targets.push({ id: ip, type: 'ping', host: ip }));
         } else {
-            const hostPortMatch = line.match(/^([a-zA-Z0-9.-]+):([0-9,]+)\/?$/);
-            if (hostPortMatch) {
-                const host = hostPortMatch[1];
-                const ports = hostPortMatch[2].split(',').map(p => p.trim()).filter(p => p);
-                ports.forEach(port => targets.push({ id: `${host}:${port}`, type: 'tcp', host, port: parseInt(port, 10) }));
+            // REMOVED: TCP Port checking logic is removed.
+            const ipRegex = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/;
+            if (ipRegex.test(line)) {
+                targets.push({ id: line, type: 'ping', host: line });
             } else {
-                const ipRegex = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/;
-                if (ipRegex.test(line)) {
-                    targets.push({ id: line, type: 'ping', host: line });
-                } else {
-                    targets.push({ id: line, type: 'http', host: line });
-                }
+                targets.push({ id: line, type: 'http', host: line });
             }
         }
     });
@@ -307,14 +304,7 @@ async function checkTarget(target, timeout, activeProfileId) {
                 const pingRes = await ping.promise.probe(target.host, { timeout });
                 result = { ...result, status: pingRes.alive ? 'Online' : 'Offline', rtt: pingRes.alive ? Math.round(pingRes.time) : -1, error: pingRes.alive ? '' : 'No reply' };
                 break;
-            case 'tcp':
-                const tcpRes = await new Promise(resolve => tcpPing.ping({ address: target.host, port: target.port, timeout: timeout * 1000 }, (err, data) => resolve({ err, data })));
-                if (!tcpRes.err && !isNaN(tcpRes.data.avg)) {
-                    result = { ...result, status: 'Online', rtt: Math.round(tcpRes.data.avg), error: '' };
-                } else {
-                    result.error = 'Connection refused or timed out';
-                }
-                break;
+            // REMOVED: 'tcp' case has been removed.
             case 'http':
                 try {
                     const url = new URL(target.host.startsWith('http') ? target.host : `https://${target.host}`);

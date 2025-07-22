@@ -29,7 +29,31 @@
         <!-- Resizable Bottom Panel -->
         <section class="bottom-panel">
             <header class="results-header">
-                <h3><i class="ph ph-chart-line"></i>Results</h3>
+                <!-- Group for Title and Status Bar -->
+                <div class="header-left-group">
+                    <h3><i class="ph ph-chart-line"></i>Results</h3>
+                    <!-- Status Bar Items moved here -->
+                    <div class="status-bar">
+                        <div class="status-bar-item">
+                            <i class="ph-bold ph-list"></i>
+                            <span id="total-targets">Targets: 0</span>
+                        </div>
+                        <div class="status-bar-item">
+                            <i class="ph-bold ph-check-circle" id="status-online-icon"></i>
+                            <span id="online-targets">Online: 0</span>
+                        </div>
+                        <div class="status-bar-item">
+                            <i class="ph-bold ph-x-circle" id="status-offline-icon"></i>
+                            <span id="offline-targets">Offline: 0</span>
+                        </div>
+                        <div class="status-bar-item">
+                            <i class="ph-bold ph-hourglass" id="status-pending-icon"></i>
+                            <span id="pending-targets">Pending: 0</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Filter Bar remains on the right -->
                 <div class="filter-bar">
                     <button class="filter-button active" data-filter="all">All</button>
                     <button class="filter-button" data-filter="online">Online</button>
@@ -57,24 +81,7 @@
         </section>
     </div>
 
-    <footer class="status-bar">
-        <div class="status-bar-item">
-            <i class="ph-bold ph-list"></i>
-            <span id="total-targets">Targets: 0</span>
-        </div>
-        <div class="status-bar-item">
-            <i class="ph-bold ph-check-circle" id="status-online-icon"></i>
-            <span id="online-targets">Online: 0</span>
-        </div>
-        <div class="status-bar-item">
-            <i class="ph-bold ph-x-circle" id="status-offline-icon"></i>
-            <span id="offline-targets">Offline: 0</span>
-        </div>
-        <div class="status-bar-item">
-            <i class="ph-bold ph-hourglass" id="status-pending-icon"></i>
-            <span id="pending-targets">Pending: 0</span>
-        </div>
-    </footer>
+    <!-- The footer element is now removed from the bottom -->
 
     <script src="renderer.js"></script>
 </body>

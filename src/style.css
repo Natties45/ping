@@ -29,7 +29,7 @@ body {
     flex-direction: column;
     height: 100%;
     padding: 16px;
-    gap: 0; /* Gap is now handled by the splitter */
+    gap: 0;
 }
 
 /* --- Top Panel --- */
@@ -42,9 +42,9 @@ body {
     border: 1px solid var(--border-color);
     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     flex-shrink: 0;
-    height: 150px; /* Initial height */
+    height: 150px;
     min-height: 100px;
-    align-items: center; /* Vertically center items */
+    align-items: center;
 }
 #targets-input {
     flex-grow: 1;
@@ -121,6 +121,8 @@ body {
     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     min-height: 0;
 }
+
+/* --- UPDATED: Results Header and integrated Status Bar --- */
 .results-header {
     display: flex;
     justify-content: space-between;
@@ -129,15 +131,50 @@ body {
     border-bottom: 1px solid var(--border-color);
     background-color: #303034;
     flex-shrink: 0;
+    gap: 16px; /* Add gap between elements */
 }
+
+.header-left-group {
+    display: flex;
+    align-items: center;
+    gap: 24px; /* Gap between "Results" title and status items */
+    flex-grow: 1;
+}
+
 .results-header h3 {
     margin: 0;
     font-size: 16px;
     display: flex;
     align-items: center;
     gap: 8px;
+    white-space: nowrap;
 }
-.filter-bar { display: flex; gap: 8px; }
+
+/* Status bar styles when inside the header */
+.status-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 13px;
+    color: var(--secondary-text-color);
+}
+
+.status-bar-item { 
+    display: flex; 
+    align-items: center; 
+    gap: 6px; /* Reduced gap */
+    white-space: nowrap;
+}
+.status-bar-item i { font-size: 16px; } /* Reduced icon size */
+#status-online-icon { color: var(--status-online); }
+#status-offline-icon { color: var(--status-offline); }
+#status-pending-icon { color: var(--status-unknown); }
+
+.filter-bar { 
+    display: flex; 
+    gap: 8px; 
+    flex-shrink: 0; /* Prevent filters from wrapping */
+}
 .filter-button {
     padding: 6px 14px;
     border: 1px solid var(--border-color);
@@ -196,22 +233,3 @@ body {
 .status-online { background-color: var(--status-online); }
 .status-offline { background-color: var(--status-offline); }
 .status-unknown { background-color: var(--status-unknown); }
-
-/* --- Status Bar --- */
-.status-bar {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    padding: 8px 16px;
-    background-color: var(--surface-color);
-    border-top: 1px solid var(--border-color);
-    font-size: 13px;
-    color: var(--secondary-text-color);
-    flex-shrink: 0;
-    margin-top: 16px;
-}
-.status-bar-item { display: flex; align-items: center; gap: 8px; }
-.status-bar-item i { font-size: 18px; }
-#status-online-icon { color: var(--status-online); }
-#status-offline-icon { color: var(--status-offline); }
-#status-pending-icon { color: var(--status-unknown); }
