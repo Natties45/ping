@@ -209,30 +209,9 @@ ipcMain.on('stop-checks', () => {
     targetStatusCache.clear(); // Clear cache on stop
 });
 
-ipcMain.handle('parse-text-to-targets', async (event, rawText) => {
-    const { default: CIDR } = await import('ip-cidr');
-    const lines = rawText.trim().split('\n').filter(line => line.trim() !== '');
-    const targets = [];
-    lines.forEach(line => {
-        line = line.trim();
-        if (CIDR.isValidCIDR(line)) {
-            const cidr = new CIDR(line);
-            // FIX: Correctly call toArray() without parameters to get all hosts.
-            // The library was updated and toArray({ from: 1, limit: cidr.count() - 2 }) is no longer the correct usage.
-            const ips = cidr.toArray();
-            ips.forEach(ip => targets.push({ id: ip, type: 'ping', host: ip }));
-        } else {
-            // REMOVED: TCP Port checking logic is removed.
-            const ipRegex = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/;
-            if (ipRegex.test(line)) {
-                targets.push({ id: line, type: 'ping', host: line });
-            } else {
-                targets.push({ id: line, type: 'http', host: line });
-            }
-        }
-    });
-    return targets;
-});
+const { parseTextToTargets } = require('./src/parsing.js');
+
+ipcMain.handle('parse-text-to-targets', (event, rawText) => parseTextToTargets(rawText));
 
 ipcMain.on('run-checks', (event, { targets, settings, activeProfileId }) => {
     if (checkInterval) clearInterval(checkInterval);
