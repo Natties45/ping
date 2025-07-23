@@ -4,7 +4,13 @@
  * It handles user interactions, communicates with the main process via the
  * preload script, and updates the DOM.
  *
- * Version 3.0: Major UI overhaul with resizable panels and detailed results table.
+ * Version 3.1 (Optimized):
+ * - Refactored table updates to be more performant.
+ * - Instead of re-rendering the entire table on each update, it now finds
+ * and updates only the specific row that has changed.
+ * - Sorting is now handled by re-ordering existing DOM elements, which is
+ * much faster than destroying and recreating them.
+ * - Filtering is handled by toggling visibility, avoiding re-renders.
  */
 
 // --- DOM Elements ---
@@ -17,7 +23,7 @@ const resultsTbodyEl = document.getElementById('results-tbody');
 const totalTargetsEl = document.getElementById('total-targets');
 const onlineTargetsEl = document.getElementById('online-targets');
 const offlineTargetsEl = document.getElementById('offline-targets');
-const pendingTargetsEl = document.getElementById('pending-targets'); // Added
+const pendingTargetsEl = document.getElementById('pending-targets');
 
 // --- State Management ---
 let targetStates = {};
@@ -29,7 +35,6 @@ let activeProfileId = '1';
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', async () => {
     currentSettings = await window.electronAPI.getSettings();
-    initializeTable([]);
     updateStatusBar();
     initializeSplitter(); // Setup the resizable panel logic
 
@@ -64,15 +69,12 @@ function handleFilterClick(event) {
         currentFilter = event.target.dataset.filter;
         document.querySelectorAll('.filter-button').forEach(btn => btn.classList.remove('active'));
         event.target.classList.add('active');
-        renderTable();
+        applyFilter(); // Apply filter without re-rendering
     }
 }
 
 // --- UI Logic ---
 
-/**
- * Sets up the logic for the draggable splitter between top and bottom panels.
- */
 function initializeSplitter() {
     const splitter = document.querySelector('.splitter');
     const topPanel = document.querySelector('.top-panel');
@@ -123,24 +125,129 @@ function updateButtonState() {
 }
 
 /**
- * Initializes the state for all targets and renders the table for the first time.
+ * Initializes the state and creates the initial table rows.
+ * This is the only function that builds the table from scratch.
  * @param {Array<object>} targets - An array of target objects from the main process.
  */
 function initializeTable(targets) {
     targetStates = {};
+    resultsTbodyEl.innerHTML = ''; // Clear previous results
+
+    if (targets.length === 0) {
+        resultsTbodyEl.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--secondary-text-color);"><i>ไม่มีเป้าหมาย...</i></td></tr>`;
+        return;
+    }
+
     targets.forEach(target => {
-        targetStates[target.id] = {
+        const state = {
             id: target.id,
             type: target.type,
-            status: 'Pending', // Start as Pending
+            status: 'Pending',
             rtt: '-',
             error: 'Waiting for first check...',
             lastChange: null,
             lastChecked: null
         };
+        targetStates[target.id] = state;
+
+        const tr = document.createElement('tr');
+        tr.id = `target-${state.id}`; // Assign a unique ID for direct access
+        tr.dataset.status = state.status.toLowerCase();
+
+        const statusClass = `status-${state.status.toLowerCase()}`;
+        
+        tr.innerHTML = `
+            <td>${state.id}</td>
+            <td><span class="status-indicator ${statusClass}"></span>${state.status}</td>
+            <td class="secondary">${state.type ? state.type.toUpperCase() : '-'}</td>
+            <td>${state.rtt}</td>
+            <td class="secondary">${formatDateTime(state.lastChange)}</td>
+            <td class="secondary">${formatDateTime(state.lastChecked)}</td>
+            <td class="secondary">${state.error || ''}</td>
+        `;
+        resultsTbodyEl.appendChild(tr);
     });
-    renderTable();
+    sortTable();
 }
+
+/**
+ * OPTIMIZED: Updates a single row in the table without re-rendering everything.
+ * @param {object} state - The updated state object for a single target.
+ */
+function updateRow(state) {
+    const row = document.getElementById(`target-${state.id}`);
+    if (!row) return;
+
+    const oldStatus = row.dataset.status;
+    const newStatus = state.status.toLowerCase();
+
+    // Update data attribute for filtering and sorting
+    row.dataset.status = newStatus;
+
+    // Update cell content
+    const statusClass = `status-${newStatus}`;
+    const rttDisplay = state.status === 'Online' ? state.rtt : '-';
+
+    row.cells[1].innerHTML = `<span class="status-indicator ${statusClass}"></span>${state.status}`;
+    row.cells[3].textContent = rttDisplay;
+    row.cells[4].textContent = formatDateTime(state.lastChange);
+    row.cells[5].textContent = formatDateTime(state.lastChecked);
+    row.cells[6].textContent = state.error || '';
+
+    // If status changed, re-sort the table
+    if (oldStatus !== newStatus) {
+        sortTable();
+    }
+    
+    // Re-apply the current filter to the updated row
+    if (currentFilter !== 'all' && newStatus !== currentFilter) {
+        row.style.display = 'none';
+    } else {
+        row.style.display = '';
+    }
+}
+
+/**
+ * OPTIMIZED: Sorts the table by moving existing DOM elements instead of rebuilding.
+ */
+function sortTable() {
+    const rows = Array.from(resultsTbodyEl.querySelectorAll('tr'));
+    const statusOrder = { 'offline': 0, 'pending': 1, 'unknown': 1, 'online': 2 };
+
+    rows.sort((a, b) => {
+        const statusA = a.dataset.status;
+        const statusB = b.dataset.status;
+        const orderA = statusOrder[statusA] ?? 99;
+        const orderB = statusOrder[statusB] ?? 99;
+
+        if (orderA !== orderB) {
+            return orderA - orderB;
+        }
+        // If status is the same, sort by ID (original order)
+        return a.id.localeCompare(b.id);
+    });
+
+    // Re-append rows in the new sorted order
+    rows.forEach(row => resultsTbodyEl.appendChild(row));
+}
+
+
+/**
+ * OPTIMIZED: Applies the current filter by changing row visibility.
+ */
+function applyFilter() {
+    const rows = resultsTbodyEl.querySelectorAll('tr');
+    rows.forEach(row => {
+        if (row.dataset.status) { // Ensure it's a data row
+            if (currentFilter === 'all' || row.dataset.status === currentFilter) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        }
+    });
+}
+
 
 // --- IPC Listeners ---
 window.electronAPI.onUpdateSingleResult((result) => {
@@ -149,7 +256,7 @@ window.electronAPI.onUpdateSingleResult((result) => {
     // Merge the new result with the existing state
     targetStates[result.id] = { ...targetStates[result.id], ...result };
     
-    renderTable();
+    updateRow(targetStates[result.id]); // Call the optimized update function
     updateStatusBar();
 });
 
@@ -159,7 +266,7 @@ window.electronAPI.onLoadProfileData(({ profileId, targetsText }) => {
     }
     activeProfileId = profileId;
     targetsInputEl.value = targetsText;
-    initializeTable([]);
+    initializeTable([]); // Clear table
     updateStatusBar();
 });
 
@@ -168,55 +275,8 @@ window.electronAPI.onTriggerSaveProfile((profileId) => {
     window.electronAPI.saveProfileData({ profileId, targetsText });
 });
 
-// --- Rendering ---
+// --- Utility Functions ---
 
-/**
- * Renders the entire results table based on the current targetStates and filter.
- */
-function renderTable() {
-    resultsTbodyEl.innerHTML = '';
-
-    const sortedTargets = Object.values(targetStates).sort((a, b) => {
-        const statusOrder = { 'Offline': 0, 'Pending': 1, 'Unknown': 1, 'Online': 2 };
-        if (statusOrder[a.status] !== statusOrder[b.status]) {
-            return statusOrder[a.status] - statusOrder[b.status];
-        }
-        return a.id.localeCompare(b.id);
-    });
-
-    if (sortedTargets.length === 0) {
-        resultsTbodyEl.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--secondary-text-color);"><i>ไม่มีเป้าหมาย...</i></td></tr>`;
-        return;
-    }
-
-    sortedTargets.forEach(state => {
-        const tr = document.createElement('tr');
-        const status = state.status || 'Unknown';
-        tr.dataset.status = status.toLowerCase();
-
-        if (currentFilter !== 'all' && tr.dataset.status !== currentFilter) {
-            tr.style.display = 'none';
-        }
-
-        const statusClass = `status-${status.toLowerCase()}`;
-        const rttDisplay = status === 'Online' ? state.rtt : '-';
-        
-        tr.innerHTML = `
-            <td>${state.id}</td>
-            <td><span class="status-indicator ${statusClass}"></span>${status}</td>
-            <td class="secondary">${state.type ? state.type.toUpperCase() : '-'}</td>
-            <td>${rttDisplay}</td>
-            <td class="secondary">${formatDateTime(state.lastChange)}</td>
-            <td class="secondary">${formatDateTime(state.lastChecked)}</td>
-            <td class="secondary">${state.error || ''}</td>
-        `;
-        resultsTbodyEl.appendChild(tr);
-    });
-}
-
-/**
- * Updates the counts in the status bar.
- */
 function updateStatusBar() {
     const allTargets = Object.values(targetStates);
     const total = allTargets.length;
@@ -230,11 +290,6 @@ function updateStatusBar() {
     pendingTargetsEl.textContent = `Pending: ${pending}`;
 }
 
-/**
- * Formats an ISO date string into a more readable local format.
- * @param {string | null} isoString - The ISO date string to format.
- * @returns {string} The formatted date string or '-'.
- */
 function formatDateTime(isoString) {
     if (!isoString) return '-';
     try {
