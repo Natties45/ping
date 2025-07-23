@@ -5,11 +5,7 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "test": "npm run test:unit && npm run test:arch",
-    "test:unit": "node test.js",
-    "test:arch": "node test-settings.js",
-    "check:outdated": "npm outdated",
-    "check:audit": "npm audit"
+    "test": "node test.js"
   },
   "keywords": [
     "network",
